@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 const rateLimit = require("express-rate-limit");
+const User = require("../models/user");
+const Domain = require("../models/domain");
 
 exports.isLoggedIn = (req, res, next) => {
   if (req.isAuthenticated()) {
@@ -39,16 +41,35 @@ exports.verifyToken = (req, res, next) => {
   }
 };
 
-exports.apiLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 10,
+const limiter = rateLimit({
+  widowMs: 60 * 1000,
+  max: (req, res) => {
+    if (req.user?.Domains[0]?.type === "premium") {
+      return 10;
+    }
+    return 2;
+  },
   handler(req, res) {
     res.status(this.statusCode).json({
       code: this.statusCode,
-      message: "1분에 10번만 요청할 수 있습니다.",
+      message: `1분에 ${
+        req.user?.Domains[0]?.type === "premium" ? "10" : "2"
+      } 회만 요청 할 수 있습니다`,
     });
   },
 });
+
+exports.apiLimiter = async (req, res, next) => {
+  let user;
+  if (res.locals.decoded) {
+    user = await User.findOne({
+      where: { id: res.locals.decoded.id },
+      include: { model: Domain },
+    });
+  }
+  req.user = user;
+  limiter(req, res, next);
+};
 
 exports.deprecated = (req, res) => {
   res.status(410).json({

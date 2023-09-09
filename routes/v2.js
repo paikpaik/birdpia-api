@@ -11,9 +11,9 @@ const router = express.Router();
 
 // /v2/token
 router.post("/token", apiLimiter, createToken);
-router.get("/test", apiLimiter, verifyToken, tokenTest);
+router.get("/test", verifyToken, apiLimiter, tokenTest);
 
-router.get("/posts/my", apiLimiter, verifyToken, getMyPosts);
-router.get("/posts/hashtag/:title", apiLimiter, verifyToken, getPostsByHashtag);
+router.get("/posts/my", verifyToken, apiLimiter, getMyPosts);
+router.get("/posts/hashtag/:title", verifyToken, apiLimiter, getPostsByHashtag);
 
 module.exports = router;
